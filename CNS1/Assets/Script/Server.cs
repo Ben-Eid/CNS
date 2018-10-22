@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System;
 using System.Net;
 using System.IO;
+using System.Text;
 public class Server : MonoBehaviour {
 	//look up ports
 	public int port = 6321;
@@ -128,6 +129,47 @@ public class Server : MonoBehaviour {
 			default:
 				break;
 		}
+	}
+	
+	private string Obfuscate(string s){
+		char[] alpha = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'};
+		//selects a random english character
+		int num = UnityEngine.Random.Range(0,25);
+		char key = alpha[num];
+		//the string that will be rwturned
+		StringBuilder ret = new StringBuilder(s);
+		int addedChars = 0;
+		//adds some random characters to the end of the string to make sure it's long enough for the key to be in the right position
+		while(ret.Length < num){
+			ret.Append(alpha[UnityEngine.Random.Range(0,25)]);
+			addedChars++;
+		}
+		//adds the key to it's proper place
+		ret.Append(key);
+		//adds some more random characters to mess with people
+		for(int i=0; i<5 && i<num; i++){
+			ret.Append(alpha[UnityEngine.Random.Range(0,25)]);
+		}
+		//adds the way to find the key at the front
+		ret.Insert(0,  alpha[addedChars]);
+		for(int i=1; i<num; i++){
+			UnityEngine.Random.InitState(num);
+			ret[i] = alpha[(Find(alpha, ret[i]) + UnityEngine.Random.Range(0,num)) % 26];
+		}
+		return ret.ToString();
+	}
+	
+	private int Find(char[] array, char toFind){
+		for(int i=0; i<array.Length; i++){
+			if(array[i] == toFind){
+				return i;
+			}
+		}
+		return -1;
+	}
+	
+	private void DeObfuscate(string s){
+		
 	}
 }
 
