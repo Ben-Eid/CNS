@@ -168,9 +168,6 @@ public class Server : MonoBehaviour {
 		return -1;
 	}
 	
-	private void DeObfuscate(string s){
-		
-	}
 }
 
 public class ServerClient {

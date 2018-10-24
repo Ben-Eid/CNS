@@ -57,7 +57,8 @@ public class GameManager : MonoBehaviour {
 	}
 	
 	public void ConnectButton(){
-		Debug.Log(Obfuscate("apples"));
+		string testString = "fuckthedodgers";
+		Debug.Log(DeObfuscate(Obfuscate(testString)));
 		mainMenu.SetActive(false);
 		connectMenu.SetActive(true);
 	}
@@ -86,31 +87,67 @@ public class GameManager : MonoBehaviour {
 	}
 	
 	private string Obfuscate(string s){
+		StringBuilder sb = new StringBuilder();
 		char[] alpha = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'};
-		//selects a random english character
-		int num = UnityEngine.Random.Range(0,25);
-		char key = alpha[num];
-		//the string that will be rwturned
-		StringBuilder ret = new StringBuilder(s);
-		int addedChars = 0;
-		//adds some random characters to the end of the string to make sure it's long enough for the key to be in the right position
-		while(ret.Length < num){
-			ret.Append(alpha[UnityEngine.Random.Range(0,25)]);
-			addedChars++;
+		//choose a random letter, this will be the seed.
+		int obFirstIntKey = UnityEngine.Random.Range(0,25);
+		char obFirstCharKey = alpha[obFirstIntKey];
+		int a = 0;
+		for(int i=0; i<s.Length; i++){
+			UnityEngine.Random.InitState(obFirstIntKey + i);
+			a = UnityEngine.Random.Range(0,25);
+			sb.Append(alpha[(Find(alpha, s[i]) + a) % 26]);
 		}
-		//adds the key to it's proper place
-		ret.Append(key);
-		//adds some more random characters to mess with people
-		for(int i=0; i<5 && i<num; i++){
-			ret.Append(alpha[UnityEngine.Random.Range(0,25)]);
+		//choose another random letter, this will be put at the start of the string to point to where the seed key will be
+		int obSecondIntKey = UnityEngine.Random.Range(s.Length + 1,25);
+		char obSecondCharKey = alpha[obSecondIntKey];
+		//place the second key at the beginning of the string
+		sb.Insert(0,obSecondCharKey);
+		//add letters to make sure obFirstCharKey is in the right position and count how many new letters needed to be added
+		int obAddedLetters = 0; 
+		while(sb.Length < obSecondIntKey){
+			obAddedLetters++;
+			sb.Append(alpha[UnityEngine.Random.Range(0,25)]);
 		}
-		//adds the way to find the key at the front
-		ret.Insert(0,  alpha[addedChars]);
-		for(int i=1; i<num; i++){
-			UnityEngine.Random.InitState(num);
-			ret[i] = alpha[(Find(alpha, ret[i]) + UnityEngine.Random.Range(0,num)) % 26];
+		//place the character representation of the amount of added characters as the second char in the string.
+		sb.Insert(1,alpha[obAddedLetters]);
+		//places the firstcharkey at the position determined by the secondCharKey.
+		sb.Append(obFirstCharKey);
+		//add a bunch of random characters to the back. because these won't be used at all we do not need to keep track of them.
+		int obEndCharacters = UnityEngine.Random.Range(0,20);
+		for(int i=0; i<obEndCharacters; i++){
+			sb.Append(alpha[UnityEngine.Random.Range(0,25)]);
 		}
-		return ret.ToString();
+		
+		//return the new string
+		Debug.Log("Obfuscation produces: " + sb.ToString());
+		return sb.ToString();
+	}
+	
+	private string DeObfuscate(string s){
+		StringBuilder sb = new StringBuilder(s);
+		char[] alpha = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'};
+		//grab the char keys pointing to where the original key is, and the char detailing how many added characters there are.
+		//the second char key will always be the first in the string
+		char deSecondCharKey = s[0];
+		int deSecondIntKey = Find(alpha, deSecondCharKey);
+		int deAddedLetters = Find(alpha, s[1]);
+		//remove the first two keys from the string
+		sb.Remove(0,2);
+		char deFirstCharKey = s[deSecondIntKey+1];
+		int deFirstIntKey = Find(alpha, deFirstCharKey);
+		int a = 0;
+		sb.Remove((deSecondIntKey - deAddedLetters - 1), sb.Length + 1 - (deSecondIntKey - deAddedLetters));
+		for(int i=0; i<sb.Length; i++){
+			UnityEngine.Random.InitState(deFirstIntKey + i);
+			a = Find(alpha, sb[i]) - UnityEngine.Random.Range(0,25);
+			if(a < 0){
+				a += 26;
+			}
+			sb[i] = alpha[a];
+		}
+		//return the new string
+		return sb.ToString();
 	}
 	
 	private int Find(char[] array, char toFind){
