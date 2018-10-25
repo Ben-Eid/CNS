@@ -57,7 +57,7 @@ public class GameManager : MonoBehaviour {
 	}
 	
 	public void ConnectButton(){
-		string testString = "fuckthedodgers";
+		string testString = "polo is a cat!|";
 		Debug.Log(DeObfuscate(Obfuscate(testString)));
 		mainMenu.SetActive(false);
 		connectMenu.SetActive(true);
@@ -86,20 +86,22 @@ public class GameManager : MonoBehaviour {
 		SceneManager.LoadScene("Game");
 	}
 	
-	private string Obfuscate(string s){
+	private string Obfuscate(char[] alpha, string s){
+		if(s.Length + 2 > alpha.Length){
+			return "!!!BAD DATA!!!";
+		}
 		StringBuilder sb = new StringBuilder();
-		char[] alpha = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'};
 		//choose a random letter, this will be the seed.
-		int obFirstIntKey = UnityEngine.Random.Range(0,25);
+		int obFirstIntKey = UnityEngine.Random.Range(0,alpha.Length - 1);
 		char obFirstCharKey = alpha[obFirstIntKey];
 		int a = 0;
 		for(int i=0; i<s.Length; i++){
 			UnityEngine.Random.InitState(obFirstIntKey + i);
-			a = UnityEngine.Random.Range(0,25);
-			sb.Append(alpha[(Find(alpha, s[i]) + a) % 26]);
+			a = UnityEngine.Random.Range(0,alpha.Length - 1);
+			sb.Append(alpha[(Find(alpha, s[i]) + a) % alpha.Length]);
 		}
 		//choose another random letter, this will be put at the start of the string to point to where the seed key will be
-		int obSecondIntKey = UnityEngine.Random.Range(s.Length + 1,25);
+		int obSecondIntKey = UnityEngine.Random.Range(s.Length + 1,alpha.Length);
 		char obSecondCharKey = alpha[obSecondIntKey];
 		//place the second key at the beginning of the string
 		sb.Insert(0,obSecondCharKey);
@@ -107,7 +109,7 @@ public class GameManager : MonoBehaviour {
 		int obAddedLetters = 0; 
 		while(sb.Length < obSecondIntKey){
 			obAddedLetters++;
-			sb.Append(alpha[UnityEngine.Random.Range(0,25)]);
+			sb.Append(alpha[UnityEngine.Random.Range(0,alpha.Length - 1)]);
 		}
 		//place the character representation of the amount of added characters as the second char in the string.
 		sb.Insert(1,alpha[obAddedLetters]);
@@ -115,8 +117,8 @@ public class GameManager : MonoBehaviour {
 		sb.Append(obFirstCharKey);
 		//add a bunch of random characters to the back. because these won't be used at all we do not need to keep track of them.
 		int obEndCharacters = UnityEngine.Random.Range(0,20);
-		for(int i=0; i<obEndCharacters; i++){
-			sb.Append(alpha[UnityEngine.Random.Range(0,25)]);
+		for(int i=0; i<obEndCharacters && sb.Length + 2 < alpha.Length; i++){
+			sb.Append(alpha[UnityEngine.Random.Range(0,alpha.Length - 1)]);
 		}
 		
 		//return the new string
@@ -124,9 +126,16 @@ public class GameManager : MonoBehaviour {
 		return sb.ToString();
 	}
 	
-	private string DeObfuscate(string s){
+	private string Obfuscate(string s){
+		char[] alpha = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','0','1','2','3','4','5','6','7','8','9','0','!','@','#','$','%','^','&','*','(',')','|',' '};
+		return Obfuscate(alpha, s);
+	}
+	
+	private string DeObfuscate(char[] alpha, string s){
+		if(s.Length + 2 > alpha.Length){
+			return "!!!BAD DATA!!!";
+		}
 		StringBuilder sb = new StringBuilder(s);
-		char[] alpha = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'};
 		//grab the char keys pointing to where the original key is, and the char detailing how many added characters there are.
 		//the second char key will always be the first in the string
 		char deSecondCharKey = s[0];
@@ -140,14 +149,19 @@ public class GameManager : MonoBehaviour {
 		sb.Remove((deSecondIntKey - deAddedLetters - 1), sb.Length + 1 - (deSecondIntKey - deAddedLetters));
 		for(int i=0; i<sb.Length; i++){
 			UnityEngine.Random.InitState(deFirstIntKey + i);
-			a = Find(alpha, sb[i]) - UnityEngine.Random.Range(0,25);
+			a = Find(alpha, sb[i]) - UnityEngine.Random.Range(0,alpha.Length - 1);
 			if(a < 0){
-				a += 26;
+				a += alpha.Length;
 			}
 			sb[i] = alpha[a];
 		}
 		//return the new string
 		return sb.ToString();
+	}
+	
+	private string DeObfuscate(string s){
+		char[] alpha = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','0','1','2','3','4','5','6','7','8','9','0','!','@','#','$','%','^','&','*','(',')','|',' '};
+		return DeObfuscate(alpha, s);
 	}
 	
 	private int Find(char[] array, char toFind){
