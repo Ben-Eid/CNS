@@ -54,7 +54,7 @@ public class Server : MonoBehaviour {
 		foreach(ServerClient sc in cl){
 			try{
 				StreamWriter writer = new StreamWriter(sc.tcp.GetStream());
-				writer.WriteLine(data);
+				writer.WriteLine(Obfuscate(data));
 				writer.Flush();
 			} catch(Exception e) {
 				Debug.Log("Write error: " + e.Message);
@@ -109,8 +109,8 @@ public class Server : MonoBehaviour {
 	
 	//read from server
 	private void OnIncomingData(ServerClient c, string data){
-		string[] aData = data.Split('|');
-		Debug.Log(c.clientName + " Says: " + data);
+		string[] aData = DeObfuscate(data).Split('|');
+		Debug.Log(c.clientName + " Says: " + DeObfuscate(data));
 		switch(aData[0]){
 			case "cWHO":
 				c.clientName = aData[1];
@@ -131,35 +131,85 @@ public class Server : MonoBehaviour {
 		}
 	}
 	
-	private string Obfuscate(string s){
-		char[] alpha = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'};
-		//selects a random english character
-		int num = UnityEngine.Random.Range(0,25);
-		char key = alpha[num];
-		//the string that will be rwturned
-		StringBuilder ret = new StringBuilder(s);
-		int addedChars = 0;
-		//adds some random characters to the end of the string to make sure it's long enough for the key to be in the right position
-		while(ret.Length < num){
-			ret.Append(alpha[UnityEngine.Random.Range(0,25)]);
-			addedChars++;
+	private string Obfuscate(char[] alpha, string s){
+		if(s.Length + 2 > alpha.Length){
+			return "!!!BAD DATA!!!";
 		}
-		//adds the key to it's proper place
-		ret.Append(key);
-		//adds some more random characters to mess with people
-		for(int i=0; i<5 && i<num; i++){
-			ret.Append(alpha[UnityEngine.Random.Range(0,25)]);
+		StringBuilder sb = new StringBuilder();
+		//choose a random letter, this will be the seed.
+		int obFirstIntKey = UnityEngine.Random.Range(0,alpha.Length - 1);
+		char obFirstCharKey = alpha[obFirstIntKey];
+		int a = 0;
+		for(int i=0; i<s.Length; i++){
+			UnityEngine.Random.InitState(obFirstIntKey + i);
+			a = UnityEngine.Random.Range(0,alpha.Length - 1);
+			sb.Append(alpha[(FindChar(alpha, s[i]) + a) % alpha.Length]);
 		}
-		//adds the way to find the key at the front
-		ret.Insert(0,  alpha[addedChars]);
-		for(int i=1; i<num; i++){
-			UnityEngine.Random.InitState(num);
-			ret[i] = alpha[(Find(alpha, ret[i]) + UnityEngine.Random.Range(0,num)) % 26];
+		//choose another random letter, this will be put at the start of the string to point to where the seed key will be
+		int obSecondIntKey = UnityEngine.Random.Range(s.Length + 1,alpha.Length);
+		char obSecondCharKey = alpha[obSecondIntKey];
+		//place the second key at the beginning of the string
+		sb.Insert(0,obSecondCharKey);
+		//add letters to make sure obFirstCharKey is in the right position and count how many new letters needed to be added
+		int obAddedLetters = 0; 
+		while(sb.Length < obSecondIntKey){
+			obAddedLetters++;
+			sb.Append(alpha[UnityEngine.Random.Range(0,alpha.Length - 1)]);
 		}
-		return ret.ToString();
+		//place the character representation of the amount of added characters as the second char in the string.
+		sb.Insert(1,alpha[obAddedLetters]);
+		//places the firstcharkey at the position determined by the secondCharKey.
+		sb.Append(obFirstCharKey);
+		//add a bunch of random characters to the back. because these won't be used at all we do not need to keep track of them.
+		int obEndCharacters = UnityEngine.Random.Range(0,20);
+		for(int i=0; i<obEndCharacters && sb.Length + 2 < alpha.Length; i++){
+			sb.Append(alpha[UnityEngine.Random.Range(0,alpha.Length - 1)]);
+		}
+		
+		//return the new string
+		Debug.Log("Obfuscation produces: " + sb.ToString());
+		return sb.ToString();
 	}
 	
-	private int Find(char[] array, char toFind){
+	private string Obfuscate(string s){
+		char[] alpha = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','0','1','2','3','4','5','6','7','8','9','0','!','@','#','$','%','^','&','*','(',')','|',' '};
+		return Obfuscate(alpha, s);
+	}
+	
+	private string DeObfuscate(char[] alpha, string s){
+		if(s.Length + 2 > alpha.Length){
+			return "!!!BAD DATA!!!";
+		}
+		StringBuilder sb = new StringBuilder(s);
+		//grab the char keys pointing to where the original key is, and the char detailing how many added characters there are.
+		//the second char key will always be the first in the string
+		char deSecondCharKey = s[0];
+		int deSecondIntKey = FindChar(alpha, deSecondCharKey);
+		int deAddedLetters = FindChar(alpha, s[1]);
+		//remove the first two keys from the string
+		sb.Remove(0,2);
+		char deFirstCharKey = s[deSecondIntKey+1];
+		int deFirstIntKey = FindChar(alpha, deFirstCharKey);
+		int a = 0;
+		sb.Remove((deSecondIntKey - deAddedLetters - 1), sb.Length + 1 - (deSecondIntKey - deAddedLetters));
+		for(int i=0; i<sb.Length; i++){
+			UnityEngine.Random.InitState(deFirstIntKey + i);
+			a = FindChar(alpha, sb[i]) - UnityEngine.Random.Range(0,alpha.Length - 1);
+			if(a < 0){
+				a += alpha.Length;
+			}
+			sb[i] = alpha[a];
+		}
+		//return the new string
+		return sb.ToString();
+	}
+	
+	private string DeObfuscate(string s){
+		char[] alpha = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','0','1','2','3','4','5','6','7','8','9','0','!','@','#','$','%','^','&','*','(',')','|',' '};
+		return DeObfuscate(alpha, s);
+	}
+	
+	private int FindChar(char[] array, char toFind){
 		for(int i=0; i<array.Length; i++){
 			if(array[i] == toFind){
 				return i;
@@ -167,7 +217,6 @@ public class Server : MonoBehaviour {
 		}
 		return -1;
 	}
-	
 }
 
 public class ServerClient {

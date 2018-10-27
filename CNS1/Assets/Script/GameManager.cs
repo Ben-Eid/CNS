@@ -98,7 +98,7 @@ public class GameManager : MonoBehaviour {
 		for(int i=0; i<s.Length; i++){
 			UnityEngine.Random.InitState(obFirstIntKey + i);
 			a = UnityEngine.Random.Range(0,alpha.Length - 1);
-			sb.Append(alpha[(Find(alpha, s[i]) + a) % alpha.Length]);
+			sb.Append(alpha[(FindChar(alpha, s[i]) + a) % alpha.Length]);
 		}
 		//choose another random letter, this will be put at the start of the string to point to where the seed key will be
 		int obSecondIntKey = UnityEngine.Random.Range(s.Length + 1,alpha.Length);
@@ -139,17 +139,17 @@ public class GameManager : MonoBehaviour {
 		//grab the char keys pointing to where the original key is, and the char detailing how many added characters there are.
 		//the second char key will always be the first in the string
 		char deSecondCharKey = s[0];
-		int deSecondIntKey = Find(alpha, deSecondCharKey);
-		int deAddedLetters = Find(alpha, s[1]);
+		int deSecondIntKey = FindChar(alpha, deSecondCharKey);
+		int deAddedLetters = FindChar(alpha, s[1]);
 		//remove the first two keys from the string
 		sb.Remove(0,2);
 		char deFirstCharKey = s[deSecondIntKey+1];
-		int deFirstIntKey = Find(alpha, deFirstCharKey);
+		int deFirstIntKey = FindChar(alpha, deFirstCharKey);
 		int a = 0;
 		sb.Remove((deSecondIntKey - deAddedLetters - 1), sb.Length + 1 - (deSecondIntKey - deAddedLetters));
 		for(int i=0; i<sb.Length; i++){
 			UnityEngine.Random.InitState(deFirstIntKey + i);
-			a = Find(alpha, sb[i]) - UnityEngine.Random.Range(0,alpha.Length - 1);
+			a = FindChar(alpha, sb[i]) - UnityEngine.Random.Range(0,alpha.Length - 1);
 			if(a < 0){
 				a += alpha.Length;
 			}
@@ -164,7 +164,7 @@ public class GameManager : MonoBehaviour {
 		return DeObfuscate(alpha, s);
 	}
 	
-	private int Find(char[] array, char toFind){
+	private int FindChar(char[] array, char toFind){
 		for(int i=0; i<array.Length; i++){
 			if(array[i] == toFind){
 				return i;
