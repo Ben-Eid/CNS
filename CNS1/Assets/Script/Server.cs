@@ -43,7 +43,7 @@ public class Server : MonoBehaviour {
 	
 	private void AcceptTcpClient(IAsyncResult ar){
 		TcpListener listener = (TcpListener)ar.AsyncState;
-		string allUsers = "SWHO|";
+		string allUsers = "sWHO|";
 		foreach(ServerClient i in clients){
 			allUsers += i.clientName + '|';
 			Debug.Log(allUsers);
@@ -118,7 +118,7 @@ public class Server : MonoBehaviour {
 		Debug.Log(c.clientName + " Says: " + Obfuscator.DeObfuscate(data));
 		switch(aData[0]){
 			case "cWHO":
-				c.clientName = aData[1];
+				c.clientName = (aData[1] == "")? aData[1]:"client";
 				c.isHost = (aData[2] == "0")? false:true;
 				if(c.isHost){
 					c.clientName = "host";

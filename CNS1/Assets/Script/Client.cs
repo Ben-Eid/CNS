@@ -40,7 +40,7 @@ public class Client : MonoBehaviour {
 		string[] aData = Obfuscator.DeObfuscate(data).Split('|');
 		Debug.Log("Server Says: " + Obfuscator.DeObfuscate(data));
 		switch(aData[0]){
-			case "SWHO":
+			case "sWHO":
 				for(int i=1; i<aData.Length-1; i++){
 					UserConnected(aData[i], false);
 				}

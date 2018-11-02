@@ -3,14 +3,18 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Text;
 public class Obfuscator{
+	private static char[] chars = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
+								   'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+								   '0','1','2','3','4','5','6','7','8','9','0','!','@','#','$','%','^','&','*','(',')','|',' '};
 	private static string Obfuscate(char[] alpha, string s){
-		if(s.Length + 2 > alpha.Length){
-			return "!!!BAD DATA!!!";
+		if(s.Length + 3 > alpha.Length){
+			Debug.Log("Obfuscate couldn't process this string: " + s);
+			return "!!!BAD DATA!!! 1";
 		}
 		System.Random grabRandomInt = new System.Random();
 		StringBuilder sb = new StringBuilder();
 		//choose a random letter, this will be the seed.
-		int obFirstIntKey = grabRandomInt.Next(0,alpha.Length - 1);
+		int obFirstIntKey = grabRandomInt.Next(s.Length+1,alpha.Length - 1);
 		char obFirstCharKey = alpha[obFirstIntKey];
 		for(int i=0; i<s.Length; i++){
 			grabRandomInt = new System.Random(obFirstIntKey + i);
@@ -33,7 +37,7 @@ public class Obfuscator{
 		sb.Append(obFirstCharKey);
 		//add a bunch of random characters to the back. because these won't be used at all we do not need to keep track of them.
 		int obEndCharacters = grabRandomInt.Next(0,20);
-		for(int i=0; i<obEndCharacters && sb.Length + 2 < alpha.Length; i++){
+		for(int i=0; i<obEndCharacters && sb.Length + 4 < alpha.Length; i++){
 			sb.Append(alpha[grabRandomInt.Next(0,alpha.Length - 1)]);
 		}
 		
@@ -42,13 +46,13 @@ public class Obfuscator{
 	}
 	
 	public static string Obfuscate(string s){
-		char[] alpha = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','0','1','2','3','4','5','6','7','8','9','0','!','@','#','$','%','^','&','*','(',')','|',' '};
-		return Obfuscate(alpha, s);
+		return Obfuscate(chars, s);
 	}
 	
 	private static string DeObfuscate(char[] alpha, string s){
 		if(s.Length + 2 > alpha.Length){
-			return "!!!BAD DATA!!!";
+			Debug.Log("DeObfuscate couldn't process this string: " + s);
+			return "!!!BAD DATA!!! 2";
 		}
 		System.Random grabRandomInt = new System.Random(); 
 		StringBuilder sb = new StringBuilder(s);
@@ -62,7 +66,8 @@ public class Obfuscator{
 		char deFirstCharKey = s[deSecondIntKey+1];
 		int deFirstIntKey = FindChar(alpha, deFirstCharKey);
 		if(deSecondIntKey < 0 || deAddedLetters < 0 || deFirstIntKey < 0){
-			return "!!!BAD DATA!!!";
+			Debug.Log("DeObfuscate couldn't process this string: " + s);
+			return "!!!BAD DATA!!! 3";
 		}
 		int a = 0;
 		sb.Remove((deSecondIntKey - deAddedLetters - 1), sb.Length + 1 - (deSecondIntKey - deAddedLetters));
@@ -70,7 +75,8 @@ public class Obfuscator{
 			grabRandomInt = new System.Random(deFirstIntKey + i);
 			a = FindChar(alpha, sb[i]);
 			if(a == -1){
-				return "!!!BAD DATA!!!";
+				Debug.Log("DeObfuscate couldn't process this string: " + s);
+				return "!!!BAD DATA!!! 4";
 			}
 			a -= grabRandomInt.Next(0,alpha.Length - 1);
 			if(a < 0){
@@ -83,8 +89,7 @@ public class Obfuscator{
 	}
 	
 	public static string DeObfuscate(string s){
-		char[] alpha = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','0','1','2','3','4','5','6','7','8','9','0','!','@','#','$','%','^','&','*','(',')','|',' '};
-		return DeObfuscate(alpha, s);
+		return DeObfuscate(chars, s);
 	}
 	
 	private static int FindChar(char[] array, char toFind){
