@@ -57,6 +57,14 @@ public class GameManager : MonoBehaviour {
 	}
 	
 	public void ConnectButton(){
+		string testSTR = "cWHOHost";
+		string newSTR = "";
+		for(int i=0; i<100; i++){
+			newSTR = Obfuscator.DeObfuscate(Obfuscator.Obfuscate(testSTR));
+			if(newSTR != testSTR){
+				Debug.Log(newSTR);
+			}
+		}
 		mainMenu.SetActive(false);
 		connectMenu.SetActive(true);
 	}
